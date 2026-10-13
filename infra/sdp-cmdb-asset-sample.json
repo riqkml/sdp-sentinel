@@ -1,0 +1,22 @@
+[
+  {
+    "TimeGenerated": "2026-01-01T00:00:00Z",
+    "RunId": "00000000-0000-0000-0000-000000000001",
+    "CiId": "sample-ci-001",
+    "CiType": "ci_computer",
+    "CiName": "sample-pc-001",
+    "Description": "Sample record for DCR schema",
+    "HostnameNorm": "sample-pc-001",
+    "IpAddress": "192.0.2.10",
+    "OsName": "Windows",
+    "Site": "Sample Site",
+    "Criticality": "Low",
+    "CiStatus": "Operational",
+    "SourceCreatedTime": "2026-01-01T00:00:00Z",
+    "SourceLastUpdated": "2026-01-01T00:00:00Z",
+    "RowHash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "RawAttributes": {
+      "sample": true
+    }
+  }
+]

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "eastasia"
+    },
+    "workspaceName": {
+      "value": "sentinel-crampas-sea"
+    },
+    "workspaceResourceGroupName": {
+      "value": "<resource-group-name>"
+    },
+    "workspaceSubscriptionId": {
+      "value": "<subscription-id>"
+    },
+    "dcrName": {
+      "value": "sdp-cmdb-mvp-dcr"
+    },
+    "tableName": {
+      "value": "SDP_CMDB_Asset_CL"
+    },
+    "streamName": {
+      "value": "Custom-SDP_CMDB_Asset"
+    },
+    "collectorPrincipalId": {
+      "value": ""
+    },
+    "collectorPrincipalType": {
+      "value": "ServicePrincipal"
+    }
+  }
+}
+

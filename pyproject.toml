@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sdp-cmdb-sentinel-mvp"
+version = "0.1.0"
+description = "Minimal ServiceDesk Plus Cloud CMDB to Microsoft Sentinel collector"
+requires-python = ">=3.11"
+dependencies = [
+    "azure-identity>=1.17.0,<2",
+    "azure-identity-broker>=1.0.0,<2",
+    "azure-functions>=2.0.0,<3",
+    "azure-monitor-ingestion>=1.0.0,<2",
+    "python-dotenv>=1.0.0,<2",
+    "requests>=2.31.0,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0,<9",
+]
+
+[project.scripts]
+sdp-cmdb-sync = "sdp_sentinel_mvp.cli:main"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

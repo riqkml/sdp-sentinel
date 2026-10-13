@@ -1,0 +1,9 @@
+.git*
+.vscode
+.venv
+__pycache__
+.pytest_cache
+.env
+.env.*
+data/*.json
+tests
