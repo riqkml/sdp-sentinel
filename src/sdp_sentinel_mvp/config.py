@@ -28,6 +28,15 @@ def _positive_int(name: str, default: int) -> int:
     return value
 
 
+def _boolean(name: str, default: bool) -> bool:
+    raw = os.getenv(name, str(default)).strip().lower()
+    if raw in {"1", "true", "yes", "on"}:
+        return True
+    if raw in {"0", "false", "no", "off"}:
+        return False
+    raise ConfigurationError(f"{name} must be a boolean")
+
+
 @dataclass(frozen=True)
 class Settings:
     sdp_token_url: str
@@ -50,6 +59,9 @@ class Settings:
     azure_tenant_id: str = ""
     azure_client_id: str = ""
     azure_client_secret: str = ""
+    ticket_dcr_id: str = ""
+    ticket_stream_name: str = "Custom-SDP_Ticket_CL"
+    sdp_tickets_enabled: bool = False
 
     @classmethod
     def from_env(cls, require_sentinel: bool = False) -> "Settings":
@@ -99,4 +111,11 @@ class Settings:
             azure_tenant_id=azure_tenant_id,
             azure_client_id=azure_client_id,
             azure_client_secret=azure_client_secret,
+            ticket_dcr_id=os.getenv(
+                "AZURE_TICKET_DCR_IMMUTABLE_ID", sentinel_dcr_id
+            ).strip(),
+            ticket_stream_name=os.getenv(
+                "AZURE_TICKET_STREAM_NAME", "Custom-SDP_Ticket_CL"
+            ).strip(),
+            sdp_tickets_enabled=_boolean("SDP_TICKETS_ENABLED", False),
         )

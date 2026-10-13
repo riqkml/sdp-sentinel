@@ -38,6 +38,46 @@ def normalize_hostname(value: Any) -> str | None:
     return hostname.split(".", 1)[0] if hostname else None
 
 
+def _string(value: Any) -> str | None:
+    value = _value(value)
+    if value in (None, ""):
+        return None
+    return str(value)
+
+
+def _boolean_value(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _person_name(value: Any) -> str | None:
+    if not isinstance(value, dict):
+        return _string(value)
+    name = value.get("name")
+    if name:
+        return _string(name)
+    parts = [value.get("first_name"), value.get("last_name")]
+    return " ".join(str(part).strip() for part in parts if part).strip() or None
+
+
+def _asset_reference(record: dict[str, Any]) -> tuple[str | None, str | None]:
+    assets = record.get("assets") or record.get("asset")
+    if isinstance(assets, dict):
+        assets = [assets]
+    if not isinstance(assets, list):
+        return None, None
+
+    for asset in assets:
+        if not isinstance(asset, dict):
+            continue
+        asset_id = asset.get("id") or asset.get("ci_id")
+        asset_name = asset.get("name") or asset.get("display_name")
+        if asset_id is not None or asset_name is not None:
+            return _string(asset_id), _string(asset_name)
+    return None, None
+
+
 def to_asset_row(
     record: dict[str, Any],
     ci_type: str,
@@ -100,6 +140,89 @@ def to_asset_row(
         "Site",
         "Criticality",
         "CiStatus",
+    )
+    hash_basis = json.dumps(
+        {field: row.get(field) for field in hash_fields},
+        sort_keys=True,
+        default=str,
+    )
+    row["RowHash"] = hashlib.sha256(hash_basis.encode("utf-8")).hexdigest()
+    return row
+
+
+def to_ticket_row(
+    record: dict[str, Any],
+    run_id: str,
+    run_timestamp: str,
+) -> dict[str, Any]:
+    ticket_id = record.get("id")
+    if ticket_id is None:
+        raise TransformError("Ticket record is missing id")
+
+    status = _string(record.get("status"))
+    is_open = status not in {None, "Closed", "Resolved", "Cancelled"}
+    is_overdue = _boolean_value(record.get("is_overdue"))
+    sla_breached = _boolean_value(
+        record.get("is_first_response_overdue") or record.get("is_overdue")
+    )
+    asset_ci_id, asset_name = _asset_reference(record)
+    site = record.get("site")
+    if site is None:
+        requester = record.get("requester")
+        if isinstance(requester, dict):
+            site = requester.get("site")
+    if site is None:
+        group = record.get("group")
+        if isinstance(group, dict):
+            site = group.get("site")
+
+    row: dict[str, Any] = {
+        "TimeGenerated": run_timestamp,
+        "RunId": run_id,
+        "TicketId": str(ticket_id),
+        "TicketNumber": _string(record.get("display_id") or record.get("display_key")),
+        "Subject": _string(record.get("subject")),
+        "Status": status,
+        "Priority": _string(record.get("priority")),
+        "Category": _string(record.get("category")),
+        "Subcategory": _string(record.get("subcategory")),
+        "Requester": _person_name(record.get("requester")),
+        "Technician": _person_name(record.get("technician")),
+        "Site": _string(site),
+        "AssetCiId": asset_ci_id,
+        "AssetName": asset_name,
+        "CreatedTime": _epoch_to_iso(record.get("created_time")),
+        "DueTime": _epoch_to_iso(record.get("due_by_time")),
+        "ResolvedTime": _epoch_to_iso(
+            record.get("resolved_time") or record.get("completed_time")
+        ),
+        "LastUpdatedTime": _epoch_to_iso(record.get("last_updated_time")),
+        "IsOpen": is_open,
+        "IsOverdue": is_overdue,
+        "SlaBreached": sla_breached,
+        "ChangeType": "Snapshot",
+        "RawAttributes": record,
+    }
+
+    hash_fields = (
+        "TicketNumber",
+        "Subject",
+        "Status",
+        "Priority",
+        "Category",
+        "Subcategory",
+        "Requester",
+        "Technician",
+        "Site",
+        "AssetCiId",
+        "AssetName",
+        "CreatedTime",
+        "DueTime",
+        "ResolvedTime",
+        "LastUpdatedTime",
+        "IsOpen",
+        "IsOverdue",
+        "SlaBreached",
     )
     hash_basis = json.dumps(
         {field: row.get(field) for field in hash_fields},

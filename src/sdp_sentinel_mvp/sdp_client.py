@@ -112,8 +112,83 @@ class SdpCloudClient:
 
         return records[:limit] if limit is not None else records
 
+    def list_requests(self, limit: int | None = None) -> list[dict[str, Any]]:
+        url = f"{self.settings.sdp_api_base_url}/requests"
+        start_index = 1
+        records: list[dict[str, Any]] = []
+        total_count: int | None = None
+
+        while True:
+            remaining = None if limit is None else max(limit - len(records), 0)
+            if remaining == 0:
+                break
+            row_count = self.settings.sdp_page_size
+            if remaining is not None:
+                row_count = min(row_count, remaining)
+
+            payload = self._get_page(
+                url,
+                {
+                    "row_count": row_count,
+                    "start_index": start_index,
+                    "get_total_count": True,
+                },
+            )
+            list_info = payload.get("list_info") or {}
+            page_records = self._records(payload)
+            records.extend(page_records)
+
+            raw_total = list_info.get("total_count")
+            if raw_total is not None:
+                try:
+                    total_count = int(raw_total)
+                except (TypeError, ValueError) as exc:
+                    raise CollectorError(
+                        "ApiError", f"Invalid request total_count from SDP: {raw_total!r}"
+                    ) from exc
+
+            has_more_rows = self._as_bool(list_info.get("has_more_rows"))
+            if not has_more_rows:
+                break
+            if not page_records:
+                raise CollectorError(
+                    "ApiError", "SDP reported another request page but returned no records"
+                )
+            start_index += row_count
+
+        if limit is None and total_count is not None and total_count != len(records):
+            raise CollectorError(
+                "CountMismatch",
+                f"requests: expected {total_count}, got {len(records)}",
+            )
+
+        return records[:limit] if limit is not None else records
+
+    def get_request(self, request_id: str) -> dict[str, Any]:
+        payload = self._get_json(
+            f"{self.settings.sdp_api_base_url}/requests/{request_id}"
+        )
+        record = payload.get("request")
+        if isinstance(record, dict):
+            return record
+
+        records = payload.get("requests")
+        if isinstance(records, list) and records and isinstance(records[0], dict):
+            return records[0]
+
+        raise CollectorError(
+            "ApiError", f"SDP request detail did not contain request {request_id}"
+        )
+
     def _get_page(self, url: str, list_info: dict[str, int | bool]) -> dict[str, Any]:
-        params = {"input_data": json.dumps({"list_info": list_info})}
+        return self._get_json(
+            url,
+            {"input_data": json.dumps({"list_info": list_info})},
+        )
+
+    def _get_json(
+        self, url: str, params: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         last_status: int | None = None
 
         for attempt in range(self.settings.sdp_max_retries):
@@ -161,7 +236,7 @@ class SdpCloudClient:
 
     @staticmethod
     def _records(payload: dict[str, Any]) -> list[dict[str, Any]]:
-        preferred_keys = ("ci_computer", "ci_computers", "data")
+        preferred_keys = ("ci_computer", "ci_computers", "requests", "data")
         for key in preferred_keys:
             value = payload.get(key)
             if isinstance(value, list):

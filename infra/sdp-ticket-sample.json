@@ -1,0 +1,30 @@
+[
+  {
+    "TimeGenerated": "2026-01-01T00:00:00Z",
+    "RunId": "00000000-0000-0000-0000-000000000002",
+    "TicketId": "sample-ticket-001",
+    "TicketNumber": "REQ-000001",
+    "Subject": "Sample ticket for DCR schema",
+    "Status": "Open",
+    "Priority": "High",
+    "Category": "Hardware",
+    "Subcategory": "Computer",
+    "Requester": "Sample User",
+    "Technician": "Sample Technician",
+    "Site": "Sample Site",
+    "AssetCiId": "sample-ci-001",
+    "AssetName": "sample-pc-001",
+    "CreatedTime": "2026-01-01T00:00:00Z",
+    "DueTime": "2026-01-02T00:00:00Z",
+    "ResolvedTime": null,
+    "LastUpdatedTime": "2026-01-01T00:00:00Z",
+    "IsOpen": true,
+    "IsOverdue": false,
+    "SlaBreached": false,
+    "ChangeType": "Added",
+    "RowHash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "RawAttributes": {
+      "sample": true
+    }
+  }
+]

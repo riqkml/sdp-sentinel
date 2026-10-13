@@ -32,20 +32,48 @@ class SentinelSink:
             credential=credential,
         )
 
-    def upload_assets(self, rows: list[dict[str, Any]]) -> int:
+    def _upload(
+        self,
+        rows: list[dict[str, Any]],
+        dcr_id: str,
+        stream_name: str,
+        entity_name: str,
+    ) -> int:
         uploaded = 0
         for start in range(0, len(rows), self.settings.sentinel_batch_size):
             batch = rows[start : start + self.settings.sentinel_batch_size]
             try:
                 self.client.upload(
-                    rule_id=self.settings.sentinel_dcr_id,
-                    stream_name=self.settings.sentinel_stream_name,
+                    rule_id=dcr_id,
+                    stream_name=stream_name,
                     logs=batch,
                 )
             except AzureError as exc:
                 raise CollectorError(
                     "IngestError",
-                    f"Sentinel ingestion failed for batch starting at {start}: {exc}",
+                    f"{entity_name} ingestion failed for batch starting at {start}: {exc}",
                 ) from exc
             uploaded += len(batch)
         return uploaded
+
+    def upload_assets(self, rows: list[dict[str, Any]]) -> int:
+        return self._upload(
+            rows,
+            self.settings.sentinel_dcr_id,
+            self.settings.sentinel_stream_name,
+            "Asset",
+        )
+
+    def upload_tickets(self, rows: list[dict[str, Any]]) -> int:
+        if not self.settings.ticket_dcr_id:
+            raise CollectorError(
+                "ConfigError",
+                "AZURE_TICKET_DCR_IMMUTABLE_ID or AZURE_DCR_IMMUTABLE_ID "
+                "is required for ticket ingestion",
+            )
+        return self._upload(
+            rows,
+            self.settings.ticket_dcr_id,
+            self.settings.ticket_stream_name,
+            "Ticket",
+        )
