@@ -1,6 +1,11 @@
 import logging
+import sys
+from pathlib import Path
 
 import azure.functions as func
+
+# The repository uses a src layout; Azure Functions loads this file from its root.
+sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 from sdp_sentinel_mvp.config import Settings
 from sdp_sentinel_mvp.service import collect_assets

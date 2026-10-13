@@ -9,7 +9,7 @@ description = "Minimal ServiceDesk Plus Cloud CMDB to Microsoft Sentinel collect
 requires-python = ">=3.11"
 dependencies = [
     "azure-identity>=1.17.0,<2",
-    "azure-identity-broker>=1.0.0,<2",
+    "azure-identity-broker>=1.0.0,<2; sys_platform == 'win32'",
     "azure-functions>=1.21.0,<2; python_version < '3.13'",
     "azure-functions>=2.0.0,<3; python_version >= '3.13'",
     "azure-monitor-ingestion>=1.0.0,<2",

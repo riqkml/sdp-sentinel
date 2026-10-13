@@ -1,8 +1,7 @@
 azure-identity>=1.17.0,<2
-azure-identity-broker>=1.0.0,<2
+azure-identity-broker>=1.0.0,<2; sys_platform == "win32"
 azure-functions>=1.21.0,<2; python_version < "3.13"
 azure-functions>=2.0.0,<3; python_version >= "3.13"
 azure-monitor-ingestion>=1.0.0,<2
 python-dotenv>=1.0.0,<2
 requests>=2.31.0,<3
--e .
