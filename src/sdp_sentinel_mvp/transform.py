@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
 from datetime import datetime, timezone
 from typing import Any
@@ -35,7 +36,23 @@ def normalize_hostname(value: Any) -> str | None:
     if value is None:
         return None
     hostname = str(_value(value)).strip().lower()
-    return hostname.split(".", 1)[0] if hostname else None
+    if not hostname:
+        return None
+    try:
+        ipaddress.ip_address(hostname)
+    except ValueError:
+        return hostname.split(".", 1)[0]
+    return None
+
+
+def _is_ip_address(value: Any) -> bool:
+    if value in (None, ""):
+        return False
+    try:
+        ipaddress.ip_address(str(_value(value)).strip())
+    except ValueError:
+        return False
+    return True
 
 
 def _string(value: Any) -> str | None:
@@ -113,7 +130,9 @@ def to_asset_row(
         or attributes.get("status")
     )
 
-    ip_address = attributes.get(settings.sdp_ip_field_key)
+    ip_address = _value(attributes.get(settings.sdp_ip_field_key))
+    if not _is_ip_address(ip_address) and _is_ip_address(name):
+        ip_address = name
     row: dict[str, Any] = {
         "TimeGenerated": run_timestamp,
         "RunId": run_id,
@@ -122,7 +141,7 @@ def to_asset_row(
         "CiName": name,
         "Description": _value(record.get("description")),
         "HostnameNorm": normalize_hostname(name),
-        "IpAddress": _value(ip_address),
+        "IpAddress": ip_address,
         "OsName": _value(os_name),
         "Site": _value(site),
         "Criticality": _value(criticality),
